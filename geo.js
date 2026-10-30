@@ -13,6 +13,7 @@
 
   const NOMINATIM = 'https://nominatim.openstreetmap.org';
   const PHOTON = 'https://photon.komoot.io/api/';
+  const PHOTON_ROOT = 'https://photon.komoot.io';
   const OVERPASS = [
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
@@ -259,7 +260,7 @@
     }
 
     /* 2) Photon 反向 */
-    const ph = await tryJson(PHOTON + 'reverse?' + new URLSearchParams({
+    const ph = await tryJson(PHOTON_ROOT + '/reverse?' + new URLSearchParams({
       lat: String(lat), lon: String(lon), limit: '1'
     }), { headers: { Accept: 'application/json' } }, 10000);
 

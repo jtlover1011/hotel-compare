@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>酒店比价助手</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="比价助手">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <button class="icon-btn" id="btnBack" hidden aria-label="返回">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5 7.5 12 15 19.5"/></svg>
+    </button>
+    <div class="brand">
+      <div class="brand-mark" id="brandMark">¥</div>
+      <div class="brand-txt">
+        <h1 id="topTitle">酒店比价</h1>
+        <p id="topSub">定位或输入目的地，看附近酒店</p>
+      </div>
+    </div>
+    <button class="icon-btn" id="btnShare" title="复制比价摘要" aria-label="复制比价摘要">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/></svg>
+    </button>
+  </header>
+
+  <main>
+
+    <!-- ================= 首页：找酒店 ================= -->
+    <section class="view" id="view-home">
+
+      <div class="card search">
+        <label class="field">
+          <span class="lbl">目的地 / 地标</span>
+          <div class="input-with-btn">
+            <input id="f-dest" type="search" placeholder="外滩 / 银座 / 西湖" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button class="locate-btn" id="btnLocate" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+              定位
+            </button>
+          </div>
+        </label>
+
+        <div class="grid2">
+          <label class="field"><span class="lbl">入住</span><input id="f-checkin" type="date"></label>
+          <label class="field"><span class="lbl">离店</span><input id="f-checkout" type="date"></label>
+        </div>
+
+        <div class="grid3">
+          <label class="field"><span class="lbl">房间</span><input id="f-rooms" type="number" min="1" max="9" inputmode="numeric" value="1"></label>
+          <label class="field"><span class="lbl">成人</span><input id="f-adults" type="number" min="1" max="9" inputmode="numeric" value="2"></label>
+          <label class="field"><span class="lbl">儿童</span><input id="f-children" type="number" min="0" max="9" inputmode="numeric" value="0"></label>
+        </div>
+
+        <div class="search-foot">
+          <span class="nights" id="nightsTip">共 1 晚</span>
+          <button class="btn-primary" id="btnSearch">搜索附近酒店</button>
+        </div>
+      </div>
+
+      <div id="geoNotice"></div>
+      <div id="placeBox"></div>
+
+      <div class="nearby-head" id="nearbyHead" hidden>
+        <div class="nearby-title">
+          <span id="nearbyTitle">附近酒店</span>
+          <span class="nearby-count" id="nearbyCount"></span>
+        </div>
+        <div class="seg" id="radiusSeg">
+          <button data-r="500">500m</button>
+          <button data-r="1000" class="on">1km</button>
+          <button data-r="2000">2km</button>
+          <button data-r="5000">5km</button>
+        </div>
+      </div>
+
+      <div id="nearbyBox" class="cards"></div>
+
+      <p class="footnote">酒店位置来自 OpenStreetMap，距离按直线计算。选中酒店后，会带着酒店名和日期去 11 个平台核价。</p>
+    </section>
+
+    <!-- ================= 比价页 ================= -->
+    <section class="view" id="view-compare" hidden>
+      <div class="hotel-head" id="hotelHead"></div>
+      <div id="summary"></div>
+
+      <div class="list-head" id="listHead">
+        <span id="listCount">平台</span>
+        <div class="seg" id="sortSeg">
+          <button data-sort="price" class="on">按价格</button>
+          <button data-sort="platform">按平台</button>
+        </div>
+      </div>
+
+      <div id="cards" class="cards"></div>
+
+      <button class="btn-ghost wide" id="btnOtherHotel">← 换一家附近酒店</button>
+      <p class="footnote">价格需你手动记录一次：点「打开」跳到平台，看到价后回来点「记价」，差价自动算。</p>
+    </section>
+
+    <!-- ================= 记录 ================= -->
+    <section class="view" id="view-history" hidden>
+      <h2 class="view-title">价格记录</h2>
+      <div class="empty" id="historyEmpty">
+        <div class="empty-ico">🧾</div>
+        <h2>还没有记录</h2>
+        <p>在任意酒店下记录一个平台的价格后，这里会自动存档，方便你二次核对。</p>
+      </div>
+      <div id="historyList" class="cards"></div>
+      <button class="btn-text danger" id="btnClearHistory" hidden>清空全部记录</button>
+    </section>
+
+    <!-- ================= 设置 ================= -->
+    <section class="view" id="view-settings" hidden>
+      <h2 class="view-title">设置</h2>
+
+      <div class="card">
+        <h2 class="set-h">显示</h2>
+        <label class="field">
+          <span class="lbl">货币符号</span>
+          <select id="f-currency">
+            <option value="¥">¥ 人民币</option>
+            <option value="$">$ 美元</option>
+            <option value="€">€ 欧元</option>
+            <option value="£">£ 英镑</option>
+            <option value="HK$">HK$ 港币</option>
+            <option value="S$">S$ 新币</option>
+          </select>
+        </label>
+        <label class="row-switch">
+          <span>打开平台时自动复制酒店名</span>
+          <input type="checkbox" id="f-autocopy" checked>
+        </label>
+      </div>
+
+      <div class="card">
+        <h2 class="set-h">携程精准跳转（可选）</h2>
+        <p class="set-p">携程必须带城市 ID 才能直接落到搜索结果页，否则只能打开首页。填了就能一键直达。</p>
+        <label class="field">
+          <span class="lbl">城市 ID</span>
+          <input id="f-cityid" type="number" inputmode="numeric" placeholder="留空 = 打开首页">
+        </label>
+        <div class="chips" id="cityChips"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="set-h">定位权限（iOS）</h2>
+        <p class="set-p">Safari 只在 <b>https</b> 页面下允许读取定位。当前页面：<b id="secureState">检测中…</b></p>
+        <p class="set-p dim">如果显示「不安全」，定位按钮会要求你先部署到 https；直接输入目的地的效果是一样的。</p>
+      </div>
+
+      <div class="card">
+        <h2 class="set-h">装到 iPhone 主屏</h2>
+        <ol class="steps">
+          <li>用 <b>Safari</b> 打开本页（不是微信/支付宝内置浏览器）</li>
+          <li>点底部中间的 <b>分享</b> 按钮 <span class="inline-ico">⤴</span></li>
+          <li>下滑选择 <b>「添加到主屏幕」</b> → 右上角「添加」</li>
+          <li>桌面出现图标，点开就是全屏、无地址栏的 App 观感</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h2 class="set-h">数据</h2>
+        <label class="row-switch">
+          <span>载入示例价格（演示用）</span>
+          <button class="mini-btn" id="btnDemo">载入</button>
+        </label>
+        <label class="row-switch">
+          <span>清空全部本地数据</span>
+          <button class="mini-btn danger" id="btnReset">清空</button>
+        </label>
+        <p class="set-p dim">所有数据只存在这台手机的浏览器里（localStorage），不上传任何服务器。</p>
+      </div>
+
+      <p class="version">酒店比价助手 · v2.0 · 本地版</p>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button data-view="home" class="on" aria-label="找酒店">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg>
+      <span>附近</span>
+    </button>
+    <button data-view="history" aria-label="记录">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 2"/></svg>
+      <span>记录</span>
+    </button>
+    <button data-view="settings" aria-label="设置">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></svg>
+      <span>设置</span>
+    </button>
+  </nav>
+
+</div>
+
+<div class="sheet-wrap" id="sheetWrap" hidden>
+  <div class="sheet-backdrop" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-grab"></div>
+    <h3 id="sheetTitle">记录价格</h3>
+    <p class="sheet-sub" id="sheetSub"></p>
+
+    <div class="seg seg-lg" id="unitSeg">
+      <button data-unit="night" class="on">每晚</button>
+      <button data-unit="total">总计</button>
+    </div>
+
+    <label class="field big">
+      <span class="lbl">价格</span>
+      <input id="f-price" type="number" inputmode="decimal" placeholder="0" autocomplete="off">
+    </label>
+    <div class="sheet-hint" id="priceHint"></div>
+
+    <label class="field">
+      <span class="lbl">备注（可选）</span>
+      <input id="f-note" type="text" placeholder="含早 / 不可退 / 会员价" autocomplete="off">
+    </label>
+
+    <div class="sheet-actions">
+      <button class="btn-ghost" data-close>取消</button>
+      <button class="btn-primary" id="btnSavePrice">保存</button>
+    </div>
+    <button class="btn-text danger" id="btnDeletePrice" hidden>删除这条价格</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="platforms.js"></script>
+<script src="geo.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
